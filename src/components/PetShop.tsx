@@ -1,53 +1,92 @@
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { User } from "@supabase/supabase-js";
 
 const products = [
   {
     id: 1,
     name: "Premium Dog Food",
-    price: "$45.99",
+    price: 45.99,
     category: "Food",
     image: "🦴",
   },
   {
     id: 2,
     name: "Cat Scratching Post",
-    price: "$29.99",
+    price: 29.99,
     category: "Toys",
     image: "🐱",
   },
   {
     id: 3,
     name: "Pet Carrier Bag",
-    price: "$39.99",
+    price: 39.99,
     category: "Accessories",
     image: "👜",
   },
   {
     id: 4,
     name: "Dental Care Kit",
-    price: "$24.99",
+    price: 24.99,
     category: "Healthcare",
     image: "🪥",
   },
   {
     id: 5,
     name: "Interactive Pet Toy",
-    price: "$19.99",
+    price: 19.99,
     category: "Toys",
     image: "🎾",
   },
   {
     id: 6,
     name: "Grooming Kit",
-    price: "$34.99",
+    price: 34.99,
     category: "Grooming",
     image: "✂️",
   },
 ];
 
 export const PetShop = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const addToCart = async (product: typeof products[0]) => {
+    if (!user) {
+      toast({ title: "Please login to add items to cart", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("cart_items").insert({
+      user_id: user.id,
+      product_name: product.name,
+      product_price: product.price,
+      product_image: product.image,
+      quantity: 1
+    });
+
+    if (error) {
+      toast({ title: "Error adding to cart", variant: "destructive" });
+    } else {
+      toast({ title: "Added to cart successfully!" });
+    }
+  };
   return (
     <section id="shop" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -73,8 +112,8 @@ export const PetShop = () => {
                 </div>
                 <h3 className="text-xl font-semibold">{product.name}</h3>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-primary">{product.price}</span>
-                  <Button size="sm" className="gap-2">
+                  <span className="text-2xl font-bold text-primary">${product.price.toFixed(2)}</span>
+                  <Button size="sm" className="gap-2" onClick={() => addToCart(product)}>
                     <ShoppingCart className="h-4 w-4" />
                     Add
                   </Button>

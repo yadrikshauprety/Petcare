@@ -14,6 +14,146 @@ export type Database = {
   }
   public: {
     Tables: {
+      cart_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_image: string | null
+          product_name: string
+          product_price: number
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_image?: string | null
+          product_name: string
+          product_price: number
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_image?: string | null
+          product_name?: string
+          product_price?: number
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          booking_id: string | null
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "vet_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          shipping_address: string
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items: Json
+          shipping_address: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          shipping_address?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pets: {
+        Row: {
+          breed: string | null
+          created_at: string
+          date_of_birth: string | null
+          id: string
+          name: string
+          photo_url: string | null
+          species: string
+          updated_at: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          breed?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          name: string
+          photo_url?: string | null
+          species: string
+          updated_at?: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          breed?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          name?: string
+          photo_url?: string | null
+          species?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           clinic_name: string | null
@@ -61,6 +201,97 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vaccination_schedules: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          pet_id: string
+          scheduled_date: string
+          status: string
+          updated_at: string
+          user_id: string
+          vaccine_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pet_id: string
+          scheduled_date: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          vaccine_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pet_id?: string
+          scheduled_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vaccine_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vaccination_schedules_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vet_bookings: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          pet_id: string | null
+          scheduled_date: string
+          service_type: string
+          status: string
+          updated_at: string
+          user_id: string
+          vet_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pet_id?: string | null
+          scheduled_date: string
+          service_type: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          vet_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          pet_id?: string | null
+          scheduled_date?: string
+          service_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vet_bookings_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
