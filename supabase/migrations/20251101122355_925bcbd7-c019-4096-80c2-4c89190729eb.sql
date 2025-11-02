@@ -160,28 +160,3 @@ CREATE TRIGGER update_vet_bookings_updated_at
   BEFORE UPDATE ON public.vet_bookings
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at();
-
--- Create messages table for chat
-CREATE TABLE public.messages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  sender_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  recipient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  booking_id UUID REFERENCES public.vet_bookings(id) ON DELETE SET NULL,
-  content TEXT NOT NULL,
-  is_read BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view their own messages"
-  ON public.messages FOR SELECT
-  USING (auth.uid() = sender_id OR auth.uid() = recipient_id);
-
-CREATE POLICY "Users can send messages"
-  ON public.messages FOR INSERT
-  WITH CHECK (auth.uid() = sender_id);
-
-CREATE POLICY "Users can update their received messages"
-  ON public.messages FOR UPDATE
-  USING (auth.uid() = recipient_id);

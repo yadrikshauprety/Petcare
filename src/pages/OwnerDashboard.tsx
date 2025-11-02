@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PetManagement } from "@/components/dashboard/PetManagement";
 import { MyCart } from "@/components/dashboard/MyCart";
 import { MyBookings } from "@/components/dashboard/MyBookings";
-import { ChatWithVet } from "@/components/dashboard/ChatWithVet";
 import { AIChatbot } from "@/components/dashboard/AIChatbot";
 import { User } from "@supabase/supabase-js";
 
@@ -46,11 +45,10 @@ const OwnerDashboard = () => {
         <h1 className="text-3xl font-bold mb-8">Pet Owner Dashboard</h1>
         
         <Tabs defaultValue="pets" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="pets">My Pets</TabsTrigger>
             <TabsTrigger value="cart">Shopping Cart</TabsTrigger>
             <TabsTrigger value="bookings">My Bookings</TabsTrigger>
-            <TabsTrigger value="chat">Chat with Vet</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pets">
@@ -63,10 +61,6 @@ const OwnerDashboard = () => {
 
           <TabsContent value="bookings">
             <MyBookings userId={user.id} />
-          </TabsContent>
-
-          <TabsContent value="chat">
-            <ChatWithVet userId={user.id} />
           </TabsContent>
         </Tabs>
       </div>
