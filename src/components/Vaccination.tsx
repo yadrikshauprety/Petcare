@@ -89,7 +89,8 @@ export const Vaccination = () => {
         </div>
 
         <div className="text-center">
-          <Link to="/auth">
+          {/* UPDATED LINK: Navigate to the Owner Dashboard and open the bookings tab */}
+          <Link to="/owner-dashboard?tab=bookings">
             <Button variant="hero" size="lg" className="gap-2">
               <Calendar className="h-5 w-5" />
               Schedule Vaccination

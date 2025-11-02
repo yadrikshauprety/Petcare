@@ -70,7 +70,8 @@ export const VetServices = () => {
                 <p className="text-muted-foreground mb-4 min-h-[48px]">{service.description}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold text-primary">{service.price}</span>
-                  <Link to="/auth">
+                  {/* All regular "Book Now" buttons link to the bookings tab */}
+                  <Link to="/owner-dashboard?tab=bookings">
                     <Button size="sm" variant="outline">Book Now</Button>
                   </Link>
                 </div>
@@ -87,10 +88,13 @@ export const VetServices = () => {
             Our emergency hotline is available 24/7 for urgent pet care situations.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Button variant="hero" size="lg" className="gap-2">
-              <Heart className="h-5 w-5" />
-              Call Emergency: 1-800-PET-HELP
-            </Button>
+            {/* The Emergency Consult button also links to the bookings tab for quick action */}
+            <Link to="/owner-dashboard?tab=bookings">
+              <Button variant="hero" size="lg" className="gap-2">
+                <Heart className="h-5 w-5" />
+                Book Emergency Video Consult
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

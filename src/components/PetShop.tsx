@@ -5,6 +5,8 @@ import { ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
+import { ToastAction } from "@/components/ui/toast";
 
 const products = [
   {
@@ -12,48 +14,49 @@ const products = [
     name: "Premium Dog Food",
     price: 45.99,
     category: "Food",
-    image: "🦴",
+    image: "🦴", // Fixed: Bone/Food emoji
   },
   {
     id: 2,
     name: "Cat Scratching Post",
     price: 29.99,
     category: "Toys",
-    image: "🐱",
+    image: "🐈", // Fixed: Cat emoji
   },
   {
     id: 3,
     name: "Pet Carrier Bag",
     price: 39.99,
     category: "Accessories",
-    image: "👜",
+    image: "👜", // Fixed: Carrier/Bag emoji
   },
   {
     id: 4,
     name: "Dental Care Kit",
     price: 24.99,
     category: "Healthcare",
-    image: "🪥",
+    image: "🦷", // Fixed: Tooth emoji
   },
   {
     id: 5,
     name: "Interactive Pet Toy",
     price: 19.99,
     category: "Toys",
-    image: "🎾",
+    image: "🎾", // Fixed: Tennis Ball emoji
   },
   {
     id: 6,
     name: "Grooming Kit",
     price: 34.99,
     category: "Grooming",
-    image: "✂️",
+    image: "🛁", // Fixed: Bathtub/Grooming emoji
   },
 ];
 
 export const PetShop = () => {
   const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -84,7 +87,17 @@ export const PetShop = () => {
     if (error) {
       toast({ title: "Error adding to cart", variant: "destructive" });
     } else {
-      toast({ title: "Added to cart successfully!" });
+      toast({
+        title: "Added to cart successfully!",
+        action: (
+          <ToastAction 
+            altText="View your shopping cart" 
+            onClick={() => navigate("/owner-dashboard?tab=cart")}
+          >
+            View Cart
+          </ToastAction>
+        )
+      });
     }
   };
   return (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +12,12 @@ import { User } from "@supabase/supabase-js";
 const OwnerDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Logic to determine the default tab from URL query params
+  const validTabs = ["pets", "cart", "bookings"];
+  const initialTab = new URLSearchParams(location.search).get("tab") || "pets";
+  const defaultTab = validTabs.includes(initialTab) ? initialTab : "pets";
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -44,7 +50,7 @@ const OwnerDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Pet Owner Dashboard</h1>
         
-        <Tabs defaultValue="pets" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="pets">My Pets</TabsTrigger>
             <TabsTrigger value="cart">Shopping Cart</TabsTrigger>
