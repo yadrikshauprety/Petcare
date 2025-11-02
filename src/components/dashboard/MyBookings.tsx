@@ -82,8 +82,8 @@ export const MyBookings = ({ userId }: { userId: string }) => {
         const now = new Date();
         // Set the service type to clearly identify it
         serviceType = "Emergency Video Consult"; 
-        // Use the current time for the booking, rounded to the minute for consistency
-        scheduledDate = now.toISOString().substring(0, 16); 
+        // FIX: Use full ISO string for proper TIMESTAMP WITH TIME ZONE insertion
+        scheduledDate = now.toISOString(); 
         // Mock a unique video call URL. The vet will use this or update it.
         videoUrl = `https://petcare.pro/call/${generateRoomId()}`;
     }
@@ -99,7 +99,9 @@ export const MyBookings = ({ userId }: { userId: string }) => {
     });
 
     if (error) {
-      toast({ title: "Error creating booking", variant: "destructive" });
+      // Log error details for debugging
+      console.error("Supabase Error creating booking:", error.message, error.details);
+      toast({ title: "Error creating booking", description: error.message, variant: "destructive" });
     } else {
       toast({ title: isEmergency ? "Emergency Consult Requested! A vet will confirm soon." : "Booking created successfully!" });
       setOpen(false);
@@ -121,6 +123,7 @@ export const MyBookings = ({ userId }: { userId: string }) => {
       
       const notes = "URGENT: Requesting immediate video consultation for my pet.";
 
+      // We only need the pet_id for the Emergency booking. The other fields are overwritten.
       createBooking({ pet_id: pets[0].id, service_type: "", scheduled_date: "", notes }, true);
   };
 

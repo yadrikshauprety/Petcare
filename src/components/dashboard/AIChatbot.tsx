@@ -6,6 +6,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, X, Send, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// 1. IMPORT THE GEMINI SDK (Requires 'npm install @google/genai')
+import { GoogleGenAI } from '@google/genai';
+import { ChatSession } from "@google/genai/server";
+
+// Retrieve the API Key from environment variables (Vite requires the VITE_ prefix)
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
 interface Message {
   id: string;
   content: string;
@@ -13,12 +20,63 @@ interface Message {
   timestamp: Date;
 }
 
+// Global variable to hold the chat session instance
+let chatSession: ChatSession | null = null;
+
+// --- Safety Logic Function (Run on User Input and enforces vet contact) ---
+const checkEmergencyAndGetSafetyResponse = (userInput: string): string | null => {
+  const lowerInput = userInput.toLowerCase();
+  const emergencyKeywords = [
+    "bleeding", "unconscious", "choking", "seizure", 
+    "poison", "toxic", "can't breathe", "broken bone", 
+    "severe pain", "collapse", "emergency", "immediately", "fever"
+  ];
+
+  const isSerious = emergencyKeywords.some(keyword => lowerInput.includes(keyword));
+
+  if (isSerious) {
+    return "🛑 **EMERGENCY WARNING:** This sounds like a serious medical emergency. I am an AI and **cannot** provide critical medical advice. **Please contact a licensed veterinarian immediately or use the 'Emergency Consult' button on the My Bookings tab.** Your pet needs professional help now.";
+  }
+
+  return null;
+};
+
+// --- REAL GEMINI API CALL INTEGRATION ---
+const callGeminiAPI = async (userInput: string): Promise<string> => {
+  if (!GEMINI_API_KEY) {
+    return "API Key not configured. Please set VITE_GEMINI_API_KEY in your .env file to enable real AI consultation responses.";
+  }
+
+  // Initialize chat session if it doesn't exist
+  if (!chatSession) {
+    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+    
+    // System instruction to guide Gemini's behavior
+    const systemInstruction = `You are a helpful pet care assistant. Provide short, sweet, and informative advice. ALWAYS include a brief disclaimer at the end of your response, such as 'For persistent or severe symptoms, please consult a licensed veterinarian immediately.' You MUST NOT provide any critical diagnosis or replacement for a vet. Your primary model is to offer general advice and promote contacting a vet for serious issues.`;
+
+    chatSession = ai.chats.create({
+      model: "gemini-2.5-flash", 
+      config: {
+        systemInstruction: systemInstruction,
+      }
+    });
+  }
+
+  try {
+    const response = await chatSession.sendMessage({ message: userInput });
+    return response.text;
+  } catch (error) {
+    console.error("Gemini API call failed:", error);
+    return "I ran into an error connecting to the AI service. Please check your API key or try again later.";
+  }
+};
+
 export const AIChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      content: "Hi! I'm your pet care assistant. How can I help you today?",
+      content: "Hi! I'm your pet care assistant powered by AI. I can offer general guidance on pet care, but remember: I am not a substitute for a licensed veterinarian. How can I help you today?",
       role: "assistant",
       timestamp: new Date(),
     },
@@ -35,10 +93,11 @@ export const AIChatbot = () => {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-
+    
+    const latestUserInput = input;
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: input,
+      content: latestUserInput,
       role: "user",
       timestamp: new Date(),
     };
@@ -47,22 +106,50 @@ export const AIChatbot = () => {
     setInput("");
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    // --- STEP 1: Run IMMEDIATE Safety Check on User Input ---
+    const emergencySafetyResponse = checkEmergencyAndGetSafetyResponse(latestUserInput);
+
+    if (emergencySafetyResponse) {
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "I'm here to help you with pet care, vaccinations, and appointments. What would you like to know?",
+        content: emergencySafetyResponse,
         role: "assistant",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMessage]);
       setIsTyping(false);
-    }, 1000);
+      return;
+    }
+
+    // --- STEP 2: Call the Real Gemini API ---
+    try {
+      const aiResponseContent = await callGeminiAPI(latestUserInput);
+
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: aiResponseContent,
+        role: "assistant",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, aiMessage]);
+
+    } catch (error) {
+      console.error("Gemini API call failed:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I ran into an error while processing your request. Please check the console for details.",
+        role: "assistant",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
     <>
-      {/* Floating Chat Button */}
+      {/* Floating Chat Button (Unchanged) */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
@@ -82,7 +169,7 @@ export const AIChatbot = () => {
         )}
       >
         <Card className="h-[600px] flex flex-col shadow-[var(--shadow-hover)] overflow-hidden border-2 border-primary/20">
-          {/* Header */}
+          {/* Header (Unchanged) */}
           <div className="bg-gradient-to-r from-primary to-[hsl(var(--primary-glow))] p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -119,10 +206,12 @@ export const AIChatbot = () => {
                       "max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm transition-all duration-300 hover:shadow-md",
                       message.role === "user"
                         ? "bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))] text-primary-foreground rounded-br-sm"
-                        : "bg-muted text-foreground rounded-bl-sm"
+                        : "bg-muted text-foreground rounded-bl-sm",
+                      // Highlight emergency warnings
+                      message.content.startsWith("🛑") && "bg-destructive/10 border border-destructive/50"
                     )}
                   >
-                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p> {/* Use whitespace-pre-wrap to respect Gemini's formatting */}
                     <p
                       className={cn(
                         "text-xs mt-1",
@@ -154,7 +243,7 @@ export const AIChatbot = () => {
             </div>
           </ScrollArea>
 
-          {/* Input */}
+          {/* Input (Unchanged) */}
           <div className="p-4 border-t bg-card">
             <div className="flex gap-2">
               <Input
