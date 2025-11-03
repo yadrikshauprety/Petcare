@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Video, PhoneCall } from "lucide-react";
+import { Calendar } from "lucide-react"; // Removed Video, PhoneCall
 
 interface Booking {
   id: string;
@@ -14,12 +14,10 @@ interface Booking {
   notes: string;
   user_id: string;
   profiles: { email: string };
-  video_call_url: string | null; // <-- ADDED
+  // Removed: video_call_url field
 }
 
-// Utility to generate a unique room ID
-const generateRoomId = () => Math.random().toString(36).substring(2, 9) + Date.now().toString(36).substring(4, 9);
-
+// Removed: generateRoomId utility
 
 export const ManageBookings = ({ vetId }: { vetId: string }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -70,19 +68,13 @@ export const ManageBookings = ({ vetId }: { vetId: string }) => {
     setBookings(bookingsWithEmails);
   };
 
-  const isEmergencyConsult = (booking: Booking) => booking.service_type === "Emergency Video Consult";
+  // Removed: isEmergencyConsult utility
 
-
-  const updateBookingStatus = async (bookingId: string, status: string, isEmergency: boolean) => {
+  const updateBookingStatus = async (bookingId: string, status: string) => { // Removed isEmergency parameter
     let updateData: any = { status, vet_id: vetId };
     
-    const bookingToUpdate = bookings.find(b => b.id === bookingId);
+    // Removed conditional logic to set video_call_url
 
-    // If confirming an emergency consult, ensure a video URL is set/generated
-    if (isEmergency && status === 'confirmed' && !bookingToUpdate?.video_call_url) {
-        updateData.video_call_url = `https://petcare.pro/call/${generateRoomId()}`;
-    }
-    
     const { error } = await supabase
       .from("vet_bookings")
       .update(updateData)
@@ -102,25 +94,18 @@ export const ManageBookings = ({ vetId }: { vetId: string }) => {
       
       <div className="grid gap-4">
         {bookings.map((booking) => {
-          const emergency = isEmergencyConsult(booking);
-          const cardClass = emergency ? 'border-destructive/50 border-2 bg-red-50 dark:bg-destructive/10' : '';
+          // const emergency = isEmergencyConsult(booking); // Removed
+          // const cardClass = emergency ? '...' : ''; // Removed
 
           return (
-            <Card key={booking.id} className={cardClass}>
+            <Card key={booking.id}> {/* Removed conditional className */}
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    {emergency ? <PhoneCall className="h-5 w-5 text-destructive" /> : <Calendar className="h-5 w-5" />}
+                    <Calendar className="h-5 w-5" /> {/* Use Calendar icon always */}
                     {booking.service_type}
                   </span>
-                  {/* Join Call button visible when confirmed and URL exists */}
-                  {emergency && booking.status === 'confirmed' && booking.video_call_url && (
-                    <Button variant="destructive" size="sm" asChild>
-                        <a href={booking.video_call_url} target="_blank" rel="noopener noreferrer">
-                            <Video className="h-4 w-4 mr-2" /> Join Patient
-                        </a>
-                    </Button>
-                  )}
+                  {/* Removed: Join Call button logic */}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -131,12 +116,7 @@ export const ManageBookings = ({ vetId }: { vetId: string }) => {
                   <p className="text-sm text-muted-foreground">
                     Date: {new Date(booking.scheduled_date).toLocaleString()}
                   </p>
-                  {/* Display video link for the vet */}
-                  {emergency && booking.video_call_url && (
-                     <p className="text-xs text-destructive">
-                       Call Link: <a href={booking.video_call_url} target="_blank" rel="noopener noreferrer" className="underline">{booking.video_call_url}</a>
-                     </p>
-                  )}
+                  {/* Removed: video call url display logic for the vet */}
                   {booking.notes && (
                     <p className="text-sm mt-2">
                       <span className="font-semibold">Notes:</span> {booking.notes}
@@ -146,7 +126,7 @@ export const ManageBookings = ({ vetId }: { vetId: string }) => {
                     <span className="text-sm font-semibold">Status:</span>
                     <Select
                       value={booking.status}
-                      onValueChange={(value) => updateBookingStatus(booking.id, value, emergency)}
+                      onValueChange={(value) => updateBookingStatus(booking.id, value)}
                     >
                       <SelectTrigger className="w-[200px]">
                         <SelectValue />

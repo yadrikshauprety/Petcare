@@ -8,11 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, Video, PhoneCall } from "lucide-react";
+import { Plus, Calendar } from "lucide-react"; // Removed Video, PhoneCall
 
-// Utility to generate a unique room ID
-const generateRoomId = () => Math.random().toString(36).substring(2, 9) + Date.now().toString(36).substring(4, 9);
-
+// Removed: generateRoomId utility
 
 interface Booking {
   id: string;
@@ -20,7 +18,7 @@ interface Booking {
   scheduled_date: string;
   status: string;
   notes: string;
-  video_call_url: string; 
+  // Removed: video_call_url property
 }
 
 interface Pet {
@@ -72,30 +70,19 @@ export const MyBookings = ({ userId }: { userId: string }) => {
     }
   };
 
-  const createBooking = async (data: typeof formData, isEmergency = false) => {
-    let videoUrl = null;
-    let scheduledDate = data.scheduled_date;
-    let serviceType = data.service_type;
-
-    if (isEmergency) {
-        // For an emergency, set the date immediately and generate a URL
-        const now = new Date();
-        // Set the service type to clearly identify it
-        serviceType = "Emergency Video Consult"; 
-        // FIX: Use full ISO string for proper TIMESTAMP WITH TIME ZONE insertion
-        scheduledDate = now.toISOString(); 
-        // Mock a unique video call URL. The vet will use this or update it.
-        videoUrl = `https://petcare.pro/call/${generateRoomId()}`;
-    }
+  const createBooking = async (data: typeof formData) => { // Removed isEmergency parameter
+    // Removed all emergency/video logic
+    
+    // Client-side validation to prevent sending empty strings to NOT NULL DB columns is kept here
+    // but also handled in handleSubmit, making data safe.
 
     const { error } = await supabase.from("vet_bookings").insert({
         user_id: userId,
-        // Default to the first pet if not selected, or require selection for normal bookings
-        pet_id: data.pet_id || (pets.length > 0 ? pets[0].id : null),
-        service_type: serviceType,
-        scheduled_date: scheduledDate,
+        pet_id: data.pet_id,
+        service_type: data.service_type,
+        scheduled_date: data.scheduled_date,
         notes: data.notes,
-        video_call_url: videoUrl,
+        // Removed: video_call_url field
     });
 
     if (error) {
@@ -103,7 +90,7 @@ export const MyBookings = ({ userId }: { userId: string }) => {
       console.error("Supabase Error creating booking:", error.message, error.details);
       toast({ title: "Error creating booking", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: isEmergency ? "Emergency Consult Requested! A vet will confirm soon." : "Booking created successfully!" });
+      toast({ title: "Booking created successfully!" }); // Simplified toast message
       setOpen(false);
       setFormData({ pet_id: "", service_type: "", scheduled_date: "", notes: "" });
       fetchBookings();
@@ -112,33 +99,34 @@ export const MyBookings = ({ userId }: { userId: string }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Explicit client-side validation to ensure all required fields are present
+    if (!formData.pet_id) {
+        toast({ title: "Validation Failed", description: "Please select a pet.", variant: "destructive" });
+        return;
+    }
+    if (!formData.service_type.trim()) {
+        toast({ title: "Validation Failed", description: "Please enter a service type.", variant: "destructive" });
+        return;
+    }
+    if (!formData.scheduled_date) {
+        toast({ title: "Validation Failed", description: "Please select a date and time.", variant: "destructive" });
+        return;
+    }
+    
     createBooking(formData);
   };
 
-  const handleEmergencyConsult = () => {
-      if (pets.length === 0) {
-          toast({ title: "Please add a pet in the 'My Pets' tab before requesting an emergency consult.", variant: "destructive" });
-          return;
-      }
-      
-      const notes = "URGENT: Requesting immediate video consultation for my pet.";
+  // Removed: handleEmergencyConsult
 
-      // We only need the pet_id for the Emergency booking. The other fields are overwritten.
-      createBooking({ pet_id: pets[0].id, service_type: "", scheduled_date: "", notes }, true);
-  };
-
-  const isEmergencyConsult = (booking: Booking) => booking.service_type === "Emergency Video Consult";
-
+  // Removed: isEmergencyConsult utility
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-2">
         <h2 className="text-2xl font-bold">My Bookings</h2>
         <div className="flex gap-2">
-          {/* New Emergency Button */}
-          <Button variant="destructive" onClick={handleEmergencyConsult}>
-            <PhoneCall className="mr-2 h-4 w-4" /> Emergency Consult
-          </Button>
+          {/* Removed: Emergency Consult Button */}
           
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -202,21 +190,14 @@ export const MyBookings = ({ userId }: { userId: string }) => {
 
       <div className="grid gap-4">
         {bookings.map((booking) => (
-          <Card key={booking.id} className={isEmergencyConsult(booking) ? 'border-destructive/50 border-2 bg-red-50 dark:bg-destructive/10' : ''}>
+          <Card key={booking.id}> {/* Removed conditional className */}
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
-                    {isEmergencyConsult(booking) ? <PhoneCall className="h-5 w-5 text-destructive" /> : <Calendar className="h-5 w-5" />}
+                    <Calendar className="h-5 w-5" /> {/* Use Calendar icon always */}
                     {booking.service_type}
                 </span>
-                {/* Join Call button visible when confirmed and URL exists */}
-                {isEmergencyConsult(booking) && booking.status === 'confirmed' && booking.video_call_url && (
-                    <Button variant="hero" size="sm" asChild>
-                        <a href={booking.video_call_url} target="_blank" rel="noopener noreferrer">
-                            <Video className="h-4 w-4 mr-2" /> Join Call
-                        </a>
-                    </Button>
-                )}
+                {/* Removed: Join Call button logic */}
               </CardTitle>
             </CardHeader>
             <CardContent>
